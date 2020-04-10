@@ -1,9 +1,9 @@
-const express = require('express');
-const db = require('../data/helpers/projectModel')
+const express = require("express");
+const db = require("../data/helpers/projectModel");
+const actionsDb = require("../data/helpers/actionModel");
 
 const router = express.Router();
 
-//GET the projects
 router.get("/", (req, res) => {
   db.get()
     .then((proj) => {
@@ -14,7 +14,6 @@ router.get("/", (req, res) => {
     });
 });
 
-//GET a project by /:id
 router.get("/:id", validateProjectId, (req, res) => {
   db.get(req.params.id)
     .then((proj) => {
@@ -25,7 +24,16 @@ router.get("/:id", validateProjectId, (req, res) => {
     });
 });
 
-//POST a project
+router.get("/:id/actions", validateProjectId, (req, res) => {
+  db.getProjectActions(req.params.id)
+    .then((actions) => {
+      res.status(200).json(actions);
+    })
+    .catch(() => {
+      res.status(500).json({ message: "unable to retrieve project actions" });
+    });
+});
+
 router.post("/", (req, res) => {
   if (req.body.name === "" || req.body.description === "") {
     res.status(200).json({
@@ -44,7 +52,17 @@ router.post("/", (req, res) => {
     });
 });
 
-//DELETE a project by /:id
+router.post("/:id/actions", validateProjectId, (req, res) => {
+  actionsDb
+    .insert(req.body)
+    .then((action) => {
+      res.status(201).json({ message: "success", action });
+    })
+    .catch(() => {
+      res.status(500).json({ message: "unable to create action" });
+    });
+});
+
 router.delete("/:id", validateProjectId, (req, res) => {
   db.remove(req.params.id)
     .then(() => {
@@ -55,7 +73,6 @@ router.delete("/:id", validateProjectId, (req, res) => {
     });
 });
 
-//PUT a project by /:id
 router.put("/:id", validateProjectId, (req, res) => {
   if (req.body.name === "" || req.body.description === "") {
     res.status(200).json({
@@ -77,7 +94,7 @@ function validateProjectId(req, res, next) {
       proj ? next() : res.status(400).json({ message: "invalid project id" });
     })
     .catch(() => {
-      res.status(500).json({ message: "invalid project id" });
+      res.status(500).json({ message: "unable to validate project id" });
     });
 }
 
